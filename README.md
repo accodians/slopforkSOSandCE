@@ -1,4 +1,4 @@
-# Spirits of Steel: Community Edition
+# Spirits of Steel: Community Edition 3.7
 
 Spirits of Steel: Community Edition is a grand strategy war game where you guide a country through diplomacy, industry, politics, military buildup, and war.
 

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spirits of Steel: Community Edition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1>Spirits of Steel: Community Edition</h1>
+            <div id="status">Loading...</div>
+        </header>
+        
+        <main>
+            <canvas id="canvas"></canvas>
+            <div id="overlay">
+                <div id="loading-spinner"></div>
+                <p>Initializing game...</p>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Use WASD or Arrow Keys to move camera | Mouse Wheel to zoom | Space for sidebar | Esc for menu</p>
+        </footer>
+    </div>
+
+    <!-- Emscripten loader script -->
+    <script async src="sosandce.js"></script>
+    
+    <!-- Game wrapper and input handling -->
+    <script src="game_wrapper.js"></script>
+</body>
+</html>

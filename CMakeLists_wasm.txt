@@ -1,0 +1,75 @@
+cmake_minimum_required(VERSION 3.16)
+project(sosandce_wasm LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Emscripten-specific settings
+if(EMSCRIPTEN)
+    set(CMAKE_EXECUTABLE_SUFFIX .js)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s WASM=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s INITIAL_MEMORY=268435456")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s MAXIMUM_MEMORY=2147483648")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --use-preload-plugins")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s DEMANGLE_SUPPORT=1")
+    
+    # Export functions for JavaScript binding
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lembind")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --preload-file assets/ui_pack@/assets/ui_pack")
+endif()
+
+# Find packages - with emscripten fallbacks
+find_package(SDL2 CONFIG)
+find_package(SDL2_image CONFIG)
+find_package(SDL2_mixer CONFIG)
+find_package(SDL2_ttf CONFIG)
+
+file(GLOB_RECURSE GAME_SOURCES
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/src/*.cpp
+)
+
+set(IMGUI_SOURCES
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include/imgui/imgui.cpp
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include/imgui/imgui_draw.cpp
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include/imgui/imgui_tables.cpp
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include/imgui/imgui_widgets.cpp
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include/imgui/imgui_impl_sdl2.cpp
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include/imgui/imgui_impl_sdlrenderer2.cpp
+)
+
+set(WASM_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/wasm/wasm_entry.cpp
+)
+
+add_executable(sosandce ${GAME_SOURCES} ${IMGUI_SOURCES} ${WASM_SOURCES})
+
+target_include_directories(sosandce PRIVATE
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include
+    ${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/include/imgui
+    ${CMAKE_SOURCE_DIR}/src/wasm
+)
+
+if(SDL2_FOUND)
+    target_link_libraries(sosandce PRIVATE
+        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+        $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
+        $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
+        $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
+    )
+endif()
+
+# WebGL support
+if(EMSCRIPTEN)
+    target_compile_options(sosandce PRIVATE -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_MIXER=2 -s USE_SDL_TTF=2)
+    set_target_properties(sosandce PROPERTIES SUFFIX ".js")
+endif()
+
+# Copy assets
+add_custom_command(TARGET sosandce POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "WebAsm build complete"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/source/SOSandCE_CPP/assets/ui_pack"
+        "${CMAKE_BINARY_DIR}/assets/ui_pack"
+)
